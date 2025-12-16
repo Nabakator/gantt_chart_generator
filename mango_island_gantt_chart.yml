@@ -1,0 +1,459 @@
+project:
+  name: "Mango Island (AORT 2025–26)"
+
+# Design intent:
+# - One coherent WBS across ALL sub-teams using the same lifecycle language (Phase A/B/C/D/E).
+# - Cross-team dependencies so it reads like one integrated rover programme.
+# - Only anchor tasks have explicit start_date; dependent tasks omit start_date so the scheduler infers.
+
+categories:
+  - id: governance
+    name: Governance & reviews
+    items:
+      - type: group
+        id: G_GOV_PHASE_A
+        name: "Phase A: Programme initiation"
+        items:
+          - type: milestone
+            id: MS_TEAM_FORMED
+            name: Team formed / roles assigned
+            deadline_date: "2025-10-06"
+          - type: milestone
+            id: MS_KICKOFF
+            name: Project kick-off
+            deadline_date: "2025-11-10"
+      - type: group
+        id: G_GOV_PHASE_B
+        name: "Phase B: Feasibility & PDR"
+        items:
+          - type: milestone
+            id: MS_PDR_SUB
+            name: PDR submission (ORT)
+            deadline_date: "2025-12-12"
+          - type: milestone
+            id: MS_PDR_FEEDBACK
+            name: PDR feedback received
+            deadline_date: "2026-01-12"
+
+      - type: group
+        id: G_GOV_PHASE_C
+        name: "Phase C: Detailed definition & CDR"
+        items:
+          - type: milestone
+            id: MS_IF_FREEZE
+            name: Interfaces freeze
+            deadline_date: "2026-01-26"
+          - type: milestone
+            id: MS_DESIGN_FREEZE
+            name: Design freeze
+            deadline_date: "2026-02-23"
+          - type: milestone
+            id: MS_CDR_SUB
+            name: CDR submission (ORT)
+            deadline_date: "2026-03-09"
+          - type: milestone
+            id: MS_CDR_FEEDBACK
+            name: CDR feedback received
+            deadline_date: "2026-03-31"
+
+      - type: group
+        id: G_GOV_PHASE_D
+        name: "Phase D: Manufacturing, integration & qualification"
+        items:
+          - type: milestone
+            id: MS_INTEGRATION_START
+            name: Integration start
+            deadline_date: "2026-04-06"
+          - type: milestone
+            id: MS_ROVER_READY
+            name: Rover ready for TRR
+            deadline_date: "2026-06-16"
+          - type: milestone
+            id: MS_TRR_START
+            name: TRR window start (ORT)
+            deadline_date: "2026-06-23"
+          - type: milestone
+            id: MS_TRR_END
+            name: TRR window end (ORT)
+            deadline_date: "2026-06-30"
+
+      # Calendar constraints (team-wide)
+      # Exams = reduced work expected (revision start → exam end)
+      - type: workpackage
+        id: WP_EXAMS_SEM1
+        name: Exams (semester 1)
+        start_date: "2025-12-08"
+        duration_days: 12
+        depends_on: []
+
+      - type: workpackage
+        id: WP_EXAMS_SEM2
+        name: Exams (semester 2)
+        start_date: "2026-04-20"
+        duration_days: 33
+        depends_on: []
+
+      - type: workpackage
+        id: WP_EXAMS_SUMMER
+        name: Exams (summer)
+        start_date: "2026-07-27"
+        duration_days: 19
+        depends_on: []
+
+      # Breaks = no work expected
+      - type: workpackage
+        id: WP_WINTER_BREAK
+        name: Winter break
+        start_date: "2025-12-22"
+        duration_days: 19
+        depends_on: []
+
+      - type: workpackage
+        id: WP_SPRING_BREAK
+        name: Spring break
+        start_date: "2026-03-30"
+        duration_days: 19
+        depends_on: []
+
+  - id: systems
+    name: Systems engineering & integration
+    items:
+      - type: group
+        id: G_SYS_PHASE_A
+        name: "Phase A: Set-up & planning"
+        items:
+          - type: workpackage
+            id: WP_SYS_TOOLING
+            name: Tooling set-up (repo, docs, CAD/EDA conventions)
+            start_date: "2025-10-06"
+            duration_days: 7
+            depends_on: []
+          - type: workpackage
+            id: WP_SYS_TEAM_PLAN
+            name: Team plan (RACI, comms cadence, definition of done)
+            duration_days: 7
+            depends_on: [WP_SYS_TOOLING]
+      - type: group
+        id: G_SYS_PHASE_B
+        name: "Phase B: Mission understanding & WBS"
+        items:
+          - type: workpackage
+            id: WP_SYS_REQS_TRACE
+            name: Requirements decomposition & traceability
+            start_date: "2025-11-10"
+            duration_days: 14
+            depends_on: []
+          - type: workpackage
+            id: WP_SYS_WBS_SCHED
+            name: WBS + integrated schedule baseline
+            duration_days: 7
+            depends_on: [WP_SYS_REQS_TRACE]
+          - type: workpackage
+            id: WP_SYS_CONOPS
+            name: CONOPS + system architecture (high-level)
+            duration_days: 14
+            depends_on: [WP_SYS_REQS_TRACE]
+          - type: workpackage
+            id: WP_SYS_ICD_DRAFT
+            name: Draft ICD (interfaces across mech/elec/sw)
+            duration_days: 10
+            depends_on: [WP_SYS_CONOPS]
+
+      - type: group
+        id: G_SYS_PHASE_C
+        name: "Phase C: Interfaces & verification planning"
+        items:
+          - type: workpackage
+            id: WP_SYS_ICD_FINAL
+            name: ICD finalisation (interface freeze)
+            start_date: "2026-01-12"
+            duration_days: 14
+            depends_on: [WP_SYS_ICD_DRAFT]
+          - type: workpackage
+            id: WP_SYS_VV_PLAN
+            name: Verification & validation plan (TRR-oriented)
+            duration_days: 14
+            depends_on: [WP_SYS_ICD_FINAL]
+          - type: workpackage
+            id: WP_SYS_RISK_REVIEW
+            name: Risk review + mitigation actions
+            duration_days: 10
+            depends_on: [WP_SYS_WBS_SCHED]
+
+      - type: group
+        id: G_SYS_PHASE_D
+        name: "Phase D: Integration & qualification campaign"
+        items:
+          - type: workpackage
+            id: WP_SYS_INTEGRATION_PLAN
+            name: Integration procedure + test readiness pack
+            start_date: "2026-03-31"
+            duration_days: 7
+            depends_on: [WP_SYS_VV_PLAN]
+          - type: workpackage
+            id: WP_SYS_INTEGRATION
+            name: System integration (mech+elec+sw)
+            duration_days: 21
+            depends_on: [WP_SYS_INTEGRATION_PLAN]
+          - type: workpackage
+            id: WP_SYS_QUAL_TESTS
+            name: Qualification testing (drive, comms, payload, safety)
+            duration_days: 28
+            depends_on: [WP_SYS_INTEGRATION]
+          - type: workpackage
+            id: WP_SYS_TRR_DEMO
+            name: TRR demonstration rehearsal
+            duration_days: 7
+            depends_on: [WP_SYS_QUAL_TESTS]
+
+  - id: mechanical
+    name: Mechanical team
+    items:
+      - type: group
+        id: G_MECH_PHASE_A
+        name: "Phase A: Set-up & familiarisation"
+        items:
+          - type: workpackage
+            id: WP_MECH_TOOLING
+            name: CAD environment + standards (templates, naming, exports)
+            start_date: "2025-10-06"
+            duration_days: 7
+            depends_on: []
+      - type: group
+        id: G_MECH_PHASE_B
+        name: "Phase B: Concept & PDR content"
+        items:
+          - type: workpackage
+            id: WP_MECH_REQS_DERIVE
+            name: Mechanical requirements derivation (from RS + system)
+            start_date: "2025-11-10"
+            duration_days: 10
+            depends_on: []
+          - type: workpackage
+            id: WP_MECH_CONCEPTS
+            name: Concepts + trade-off (chassis, mobility, payload)
+            duration_days: 14
+            depends_on: [WP_MECH_REQS_DERIVE]
+          - type: workpackage
+            id: WP_MECH_PDR_CONTENT
+            name: PDR mechanical section (concept, sizing, risks)
+            duration_days: 10
+            depends_on: [WP_MECH_CONCEPTS]
+
+      - type: group
+        id: G_MECH_PHASE_C
+        name: "Phase C: Detailed design (to design freeze)"
+        items:
+          - type: workpackage
+            id: WP_MECH_ARCH
+            name: Mechanical architecture & packaging (CAD skeleton)
+            start_date: "2026-01-12"
+            duration_days: 10
+            depends_on: [WP_MECH_CONCEPTS]
+          - type: workpackage
+            id: WP_MECH_CHASSIS_DESIGN
+            name: Chassis & mobility detailed design
+            duration_days: 18
+            depends_on: [WP_MECH_ARCH]
+          - type: workpackage
+            id: WP_MECH_PAYLOAD_DESIGN
+            name: Sample collection / payload detailed design
+            duration_days: 14
+            depends_on: [WP_MECH_ARCH]
+          - type: workpackage
+            id: WP_MECH_CDR_CONTENT
+            name: CDR mechanical section (final design, AIT plan)
+            duration_days: 10
+            depends_on: [WP_MECH_CHASSIS_DESIGN, WP_MECH_PAYLOAD_DESIGN]
+
+      - type: group
+        id: G_MECH_PHASE_D
+        name: "Phase D: Build & pre-integration"
+        items:
+          - type: workpackage
+            id: WP_MECH_PROCUREMENT
+            name: Procurement (mechanical parts, fasteners, materials)
+            start_date: "2026-03-31"
+            duration_days: 10
+            depends_on: [WP_MECH_CDR_CONTENT]
+          - type: workpackage
+            id: WP_MECH_BUILD_CHASSIS
+            name: Build chassis & mobility hardware
+            duration_days: 21
+            depends_on: [WP_MECH_PROCUREMENT]
+          - type: workpackage
+            id: WP_MECH_BUILD_PAYLOAD
+            name: Build payload / sample collection hardware
+            duration_days: 14
+            depends_on: [WP_MECH_PROCUREMENT]
+          - type: workpackage
+            id: WP_MECH_MECH_CHECKOUT
+            name: Mechanical checkout (fit, clearances, robustness)
+            duration_days: 7
+            depends_on: [WP_MECH_BUILD_CHASSIS, WP_MECH_BUILD_PAYLOAD]
+
+  - id: electronics
+    name: Electronics team
+    items:
+      - type: group
+        id: G_ELEC_PHASE_A
+        name: "Phase A: Set-up & familiarisation"
+        items:
+          - type: workpackage
+            id: WP_ELEC_TOOLING
+            name: EDA environment + standards (libraries, footprints, wiring norms)
+            start_date: "2025-10-06"
+            duration_days: 7
+            depends_on: []
+      - type: group
+        id: G_ELEC_PHASE_B
+        name: "Phase B: Architecture & PDR content"
+        items:
+          - type: workpackage
+            id: WP_ELEC_REQS_DERIVE
+            name: Electrical requirements derivation (power, safety, comms)
+            start_date: "2025-11-10"
+            duration_days: 10
+            depends_on: []
+          - type: workpackage
+            id: WP_ELEC_ARCH
+            name: Power + compute architecture (block diagrams)
+            duration_days: 14
+            depends_on: [WP_ELEC_REQS_DERIVE]
+          - type: workpackage
+            id: WP_ELEC_PARTS_SELECT
+            name: Parts selection + budget (motors drivers, compute, radio)
+            duration_days: 14
+            depends_on: [WP_ELEC_ARCH]
+          - type: workpackage
+            id: WP_ELEC_PDR_CONTENT
+            name: PDR electronics section (architecture, risks)
+            duration_days: 7
+            depends_on: [WP_ELEC_PARTS_SELECT]
+
+      - type: group
+        id: G_ELEC_PHASE_C
+        name: "Phase C: Schematics, harness, interfaces"
+        items:
+          - type: workpackage
+            id: WP_ELEC_ICD_INPUTS
+            name: Interface definitions to ICD (connectors, pinouts, power)
+            start_date: "2026-01-12"
+            duration_days: 10
+            depends_on: [WP_ELEC_PARTS_SELECT]
+          - type: workpackage
+            id: WP_ELEC_SCHEMATICS
+            name: Schematics + wiring design
+            duration_days: 28
+            depends_on: [WP_ELEC_ICD_INPUTS]
+          - type: workpackage
+            id: WP_ELEC_POWER_BUDGET
+            name: Final power budget + battery/safety review
+            duration_days: 14
+            depends_on: [WP_ELEC_ICD_INPUTS]
+          - type: workpackage
+            id: WP_ELEC_CDR_CONTENT
+            name: CDR electronics section (final design, AIT plan)
+            duration_days: 10
+            depends_on: [WP_ELEC_SCHEMATICS, WP_ELEC_POWER_BUDGET]
+
+      - type: group
+        id: G_ELEC_PHASE_D
+        name: "Phase D: Build, harness, bring-up"
+        items:
+          - type: workpackage
+            id: WP_ELEC_PROCUREMENT
+            name: Procurement (electronics, connectors, wiring, batteries)
+            start_date: "2026-03-31"
+            duration_days: 10
+            depends_on: [WP_ELEC_CDR_CONTENT]
+          - type: workpackage
+            id: WP_ELEC_HARNESS
+            name: Harness build + panel assembly
+            duration_days: 14
+            depends_on: [WP_ELEC_PROCUREMENT]
+          - type: workpackage
+            id: WP_ELEC_BRINGUP
+            name: Power-on + bench bring-up (rails, comms, safety)
+            duration_days: 14
+            depends_on: [WP_ELEC_HARNESS]
+
+  - id: software
+    name: Software team
+    items:
+      - type: group
+        id: G_SW_PHASE_A
+        name: "Phase A: Set-up & familiarisation"
+        items:
+          - type: workpackage
+            id: WP_SW_TOOLING
+            name: Repo bootstrap (linting, formatting, CI, issue templates)
+            start_date: "2025-10-06"
+            duration_days: 7
+            depends_on: []
+      - type: group
+        id: G_SW_PHASE_B
+        name: "Phase B: Architecture & PDR content"
+        items:
+          - type: workpackage
+            id: WP_SW_REQS_DERIVE
+            name: Software requirements derivation (control, comms, safety)
+            start_date: "2025-11-10"
+            duration_days: 10
+            depends_on: []
+          - type: workpackage
+            id: WP_SW_ARCH
+            name: Software architecture (modules, comms, state machine)
+            duration_days: 14
+            depends_on: [WP_SW_REQS_DERIVE]
+          - type: workpackage
+            id: WP_SW_PDR_CONTENT
+            name: PDR software section (architecture, risks)
+            duration_days: 7
+            depends_on: [WP_SW_ARCH]
+
+      - type: group
+        id: G_SW_PHASE_C
+        name: "Phase C: Core implementation (to design freeze)"
+        items:
+          - type: workpackage
+            id: WP_SW_DEV_ENV
+            name: Dev environment + CI skeleton
+            start_date: "2026-01-12"
+            duration_days: 7
+            depends_on: [WP_SW_ARCH]
+          - type: workpackage
+            id: WP_SW_COMMS
+            name: Comms layer (telemetry + command protocol)
+            duration_days: 14
+            depends_on: [WP_SW_DEV_ENV]
+          - type: workpackage
+            id: WP_SW_MOTOR_CONTROL
+            name: Motor control layer (API + safety constraints)
+            duration_days: 14
+            depends_on: [WP_SW_DEV_ENV]
+          - type: workpackage
+            id: WP_SW_PAYLOAD_CONTROL
+            name: Payload control layer (API + sequencing)
+            duration_days: 14
+            depends_on: [WP_SW_DEV_ENV]
+          - type: workpackage
+            id: WP_SW_CDR_CONTENT
+            name: CDR software section (design, test approach)
+            duration_days: 10
+            depends_on: [WP_SW_COMMS, WP_SW_MOTOR_CONTROL, WP_SW_PAYLOAD_CONTROL]
+
+      - type: group
+        id: G_SW_PHASE_D
+        name: "Phase D: System bring-up & integration support"
+        items:
+          - type: workpackage
+            id: WP_SW_SYSTEM_BRINGUP
+            name: On-hardware bring-up (comms + control loop)
+            duration_days: 14
+            depends_on: [WP_ELEC_BRINGUP, WP_SW_CDR_CONTENT]
+          - type: workpackage
+            id: WP_SW_INTEGRATION_SUPPORT
+            name: Integration support + bug fixing
+            duration_days: 21
+            depends_on: [WP_SW_SYSTEM_BRINGUP]

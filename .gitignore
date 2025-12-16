@@ -1,0 +1,22 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Bytecode cache from tools
+.pytest_cache/
+.mypy_cache/
+
+# MacOS
+.DS_Store
+
+# Generated files
+*.svg
+
+# IDE settings
+.idea/
+.vscode/

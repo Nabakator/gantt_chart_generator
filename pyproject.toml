@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gantt_chart_generator"
+version = "0.1.0"
+description = "Minimal CLI to load, schedule, flatten, and render a static SVG Gantt chart."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML>=6.0",
+    "matplotlib>=3.7",
+]
+
+[project.scripts]
+gantt-chart-generator = "gantt_chart_generator.__main__:main"
+
+[tool.setuptools]
+include-package-data = false
+py-modules = ["plan_models", "parse_plan", "render_gantt", "render_rows", "scheduling"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gantt_chart_generator"]
