@@ -34,14 +34,16 @@ pip install .
 Basic syntax:
 
 ```bash
-python -m gantt_chart_generator plan.yml [--out gantt.svg] [--min-date YYYY-MM-DD] [--max-date YYYY-MM-DD] [--view]
+python3 -m gantt_chart_generator input/engineering_project.yml [--out output/gantt_chart.svg] [--min-date YYYY-MM-DD] [--max-date YYYY-MM-DD] [--no-view] [--year YYYY]
 ```
 
 Options:
 
-- `--out PATH`: Output SVG path (default: `gantt.svg`)
+- `--out PATH`: Output SVG path (default: `output/gantt_chart.svg`)
 - `--min-date`, `--max-date`: Optional bounds; otherwise inferred from data
-- `--view`: Best-effort open the output file after rendering
+- `--view`: Best-effort open the output file after rendering (default)
+- `--no-view`: Disable auto-opening the output file
+- `--year`: Footer year override (defaults to chart max year)
 - `--help`: Shows help (includes “Gantt chart generator”)
 
 Exit codes:
@@ -54,10 +56,13 @@ Examples:
 
 ```bash
 # Render with inferred window
-python -m gantt_chart_generator plan.yml --out chart.svg
+python3 -m gantt_chart_generator input/engineering_project.yml
 
-# Set explicit date bounds and open the result
-python -m gantt_chart_generator plan.yml --min-date 2024-01-01 --max-date 2024-03-31 --view
+# Set explicit date bounds without auto-opening
+python3 -m gantt_chart_generator input/engineering_project.yml --min-date 2024-01-01 --max-date 2024-03-31 --no-view
+
+# Override output path and footer year
+python3 -m gantt_chart_generator input/engineering_project.yml --out output/engineering_project.svg --year 2026
 ```
 
 ### Programmatic API
@@ -68,7 +73,7 @@ from gantt_chart_generator.scheduling import schedule_plan
 from gantt_chart_generator.render_rows import to_render_rows
 from gantt_chart_generator.render_gantt import render_gantt
 
-plan = load_plan("plan.yml")
+plan = load_plan("project.yml")
 schedule_plan(plan)
 rows = to_render_rows(plan)
 render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind Farm")

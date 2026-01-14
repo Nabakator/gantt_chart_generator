@@ -1,0 +1,45 @@
+project:
+  name: Engineering project
+
+categories:
+  - id: planning
+    name: Planning
+    items:
+      - type: workpackage
+        id: WP_SCOPE
+        name: Define scope
+        start_date: "2025-01-06"
+        duration_days: 5
+        depends_on: []
+      - type: workpackage
+        id: WP_SCHEDULE
+        name: Draft schedule
+        duration_days: 4
+        depends_on: [WP_SCOPE]
+
+  - id: design
+    name: Design
+    items:
+      - type: workpackage
+        id: WP_ARCH
+        name: Architecture design
+        duration_days: 10
+        depends_on: [WP_SCHEDULE]
+      - type: workpackage
+        id: WP_REVIEW
+        name: Design review
+        duration_days: 2
+        depends_on: [WP_ARCH]
+
+  - id: build
+    name: Build
+    items:
+      - type: workpackage
+        id: WP_IMPLEMENT
+        name: Implementation
+        duration_days: 12
+        depends_on: [WP_REVIEW]
+      - type: milestone
+        id: MS_RELEASE
+        name: Release ready
+        deadline_date: "2025-02-14"

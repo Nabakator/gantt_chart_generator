@@ -29,11 +29,23 @@ def _build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("plan", help="Path to plan YAML")
-    parser.add_argument("--out", default="gantt.svg", help="Output SVG path")
+    parser.add_argument("--out", default="output/gantt_chart.svg", help="Output SVG path")
     parser.add_argument("--min-date", type=_parse_date, help="Override inferred minimum date (YYYY-MM-DD)")
     parser.add_argument("--max-date", type=_parse_date, help="Override inferred maximum date (YYYY-MM-DD)")
     parser.add_argument("--year", type=int, help="Footer year; defaults to chart max year")
-    parser.add_argument("--view", action="store_true", help="Best-effort open the output file after rendering")
+    parser.add_argument(
+        "--view",
+        dest="view",
+        action="store_true",
+        default=True,
+        help="Best-effort open the output file after rendering",
+    )
+    parser.add_argument(
+        "--no-view",
+        dest="view",
+        action="store_false",
+        help="Do not open the output file after rendering",
+    )
     return parser
 
 

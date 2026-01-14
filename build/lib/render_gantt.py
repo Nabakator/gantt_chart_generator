@@ -5,14 +5,17 @@ import heapq
 import math
 from pathlib import Path
 from typing import Iterable
+from importlib import metadata
 
 import matplotlib
 
 matplotlib.use("Agg")  # ensure headless, deterministic output
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 from matplotlib.patches import FancyArrowPatch, Polygon
 import matplotlib.path as mpath
+from matplotlib.textpath import TextPath
 
 from plan_models import FlatRenderRow
 
@@ -25,6 +28,17 @@ ROUTE_CLEARANCE = 0.12  # clearance against bars when validating polylines
 DETOUR_STEP_X = 0.5  # days to shift detour leftwards when blocked
 DETOUR_MAX_STEPS = 8  # max shifts to try
 DETOUR_MARGIN_X = 1.0  # minimum margin from global x_min when shifting
+BRACKET_LW = 2.5
+# Fixed large gutter so labels sit clear of the timeline.
+LEFT_MARGIN_FRAC = 0.42
+LABEL_PAD_INCH = 0.35  # extra padding beyond longest label when computing gutter
+LABEL_PAD_DAYS = 14.0  # days to pad labels to the left of min_date
+TIMELINE_PAD_DAYS = 7  # add breathing room before first and after last date
+FONT_SCALE = 1.0
+TITLE_FONT = 14 * FONT_SCALE
+LABEL_FONT = 10 * FONT_SCALE
+FOOTER_FONT = 8 * FONT_SCALE
+TICK_FONT = 9 * FONT_SCALE
 
 def render_gantt(
     rows: list[FlatRenderRow],
@@ -32,6 +46,7 @@ def render_gantt(
     title: str,
     min_date: dt.date | None = None,
     max_date: dt.date | None = None,
+    year: int | None = None,
 ) -> None:
     """
     Render a static SVG Gantt chart to `out_path`.
@@ -47,20 +62,26 @@ def render_gantt(
     min_date, max_date = _resolve_date_window(rows, min_date, max_date)
 
     cat_colors = _category_colors(rows)
-    label_pad_days = 2.0
+    label_pad_days = LABEL_PAD_DAYS
     indent_step_days = 0.5
     row_height = 0.6
 
     span_days = (max_date - min_date).days + 1
     fig_height = max(3.0, row_height * len(rows) + 2.0)
     fig_width = max(12.0, min(24.0, span_days / 7.0 * 2.0 + 6.0))
-    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-    fig.subplots_adjust(top=0.9)  # add breathing room for the title
+    fig = plt.figure(figsize=(fig_width, fig_height))
+    # Allocate explicit grid: left column for labels, right for chart.
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.2, 4.0], wspace=0.05, left=0.06, right=0.98, top=0.9, bottom=0.1)
+    label_ax = fig.add_subplot(gs[0, 0])
+    ax = fig.add_subplot(gs[0, 1], sharey=label_ax)
 
     # Configure axes: dates on x, rows on y.
     ax.set_ylim(-1, len(rows))
-    ax.set_xlim(mdates.date2num(min_date - dt.timedelta(days=1)), mdates.date2num(max_date + dt.timedelta(days=1)))
     ax.invert_yaxis()
+    ax.set_xlim(
+        mdates.date2num(min_date - dt.timedelta(days=TIMELINE_PAD_DAYS)),
+        mdates.date2num(max_date + dt.timedelta(days=TIMELINE_PAD_DAYS)),
+    )
     ax.xaxis_date()
     ax.xaxis.tick_top()
     major_locator, major_formatter = _major_tick_strategy(span_days)
@@ -69,14 +90,23 @@ def render_gantt(
     ax.xaxis.set_minor_locator(mdates.DayLocator(interval=1))
     ax.grid(True, axis="x", which="major", linestyle="--", alpha=0.4)
     ax.grid(True, axis="x", which="minor", linestyle=":", alpha=0.2)
-    ax.tick_params(axis="x", labelrotation=30, labelsize=9, pad=4)
+    ax.tick_params(axis="x", labelrotation=30, labelsize=TICK_FONT, pad=4)
     ax.set_yticks([])
     ax.set_xlabel("")
     ax.set_ylabel("")
 
-    # Ensure title contains required phrase.
-    render_title = title if "Gantt chart generator" in title else f"Gantt chart generator — {title}"
-    ax.set_title(render_title, loc="left", fontsize=14, pad=20)
+    # Label axis on the left; pure text, shares y-scale.
+    label_ax.set_ylim(-1, len(rows))
+    label_ax.invert_yaxis()
+    label_ax.set_xlim(0, 1)
+    label_ax.axis("off")
+
+    # Title uses project name only, centered.
+    fig.suptitle(title, x=0.5, fontsize=TITLE_FONT, y=0.95)
+    footer_year = year or max_date.year
+    footer_version = _tool_version()
+    footer = f"© {footer_year} Gantt chart generator v{footer_version} by Nabakator"
+    fig.text(0.99, 0.01, footer, ha="right", va="bottom", fontsize=FOOTER_FONT, alpha=0.8)
 
     # Collect positions for dependency arrows.
     positions: dict[str, tuple[float, float, float]] = {}  # id -> (x_start, x_finish, y)
@@ -84,16 +114,16 @@ def render_gantt(
 
     for idx, row in enumerate(rows):
         y = idx
-        label_x = mdates.date2num(min_date - dt.timedelta(days=label_pad_days - indent_step_days * row.indent))
         text_weight = "bold" if row.node_type == "category" else "normal"
-        ax.text(
-            label_x,
+        label_ax.text(
+            0.98,
             y,
             row.name,
             ha="right",
             va="center",
-            fontsize=10,
+            fontsize=LABEL_FONT,
             fontweight=text_weight,
+            transform=label_ax.transData,
         )
 
         if row.node_type == "bar" and row.start_date and row.finish_date:
@@ -129,9 +159,10 @@ def render_gantt(
             x_start = mdates.date2num(row.start_date)
             x_end = mdates.date2num(row.finish_date + dt.timedelta(days=1))
             cap = row_height / 2.2
-            ax.plot([x_start, x_end], [y, y], color="#555555", linewidth=1.4)
-            ax.plot([x_start, x_start], [y - cap, y + cap], color="#555555", linewidth=1.4)
-            ax.plot([x_end, x_end], [y - cap, y + cap], color="#555555", linewidth=1.4)
+            color = cat_colors.get(row.category, "#555555")
+            ax.plot([x_start, x_end], [y, y], color=color, linewidth=BRACKET_LW, zorder=2)
+            ax.plot([x_start, x_start], [y - cap, y + cap], color=color, linewidth=BRACKET_LW, zorder=2)
+            ax.plot([x_end, x_end], [y - cap, y + cap], color=color, linewidth=BRACKET_LW, zorder=2)
 
         # Categories only emit label.
 
@@ -169,6 +200,24 @@ def _resolve_date_window(
         raise ValueError("Cannot infer max_date; no date values present")
     computed_max = max_date or max(computed_max_candidates)
     return computed_min, computed_max
+
+
+def _left_margin_for_labels(
+    rows: Iterable[FlatRenderRow],
+    fig_width_inch: float,
+    label_fontsize: int,
+    extra_pad_inch: float,
+) -> float:
+    """Estimate fractional left margin needed to fit longest label."""
+    # Dynamic calculation no longer used; keep stub for compatibility.
+    return LEFT_MARGIN_FRAC
+
+
+def _tool_version() -> str:
+    try:
+        return metadata.version("gantt_chart_generator")
+    except Exception:
+        return "0.0.0"
 
 
 def _segments_intersect_rect(seg_start: tuple[float, float], seg_end: tuple[float, float], rect: tuple[float, float, float, float]) -> bool:

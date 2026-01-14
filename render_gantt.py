@@ -39,6 +39,8 @@ TITLE_FONT = 14 * FONT_SCALE
 LABEL_FONT = 10 * FONT_SCALE
 FOOTER_FONT = 8 * FONT_SCALE
 TICK_FONT = 9 * FONT_SCALE
+TOP_MARGIN_FRAC = 0.85
+TITLE_Y = 0.985
 
 def render_gantt(
     rows: list[FlatRenderRow],
@@ -71,7 +73,7 @@ def render_gantt(
     fig_width = max(12.0, min(24.0, span_days / 7.0 * 2.0 + 6.0))
     fig = plt.figure(figsize=(fig_width, fig_height))
     # Allocate explicit grid: left column for labels, right for chart.
-    gs = fig.add_gridspec(1, 2, width_ratios=[1.2, 4.0], wspace=0.05, left=0.06, right=0.98, top=0.9, bottom=0.1)
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.2, 4.0], wspace=0.05, left=0.06, right=0.98, top=TOP_MARGIN_FRAC, bottom=0.1)
     label_ax = fig.add_subplot(gs[0, 0])
     ax = fig.add_subplot(gs[0, 1], sharey=label_ax)
 
@@ -102,7 +104,7 @@ def render_gantt(
     label_ax.axis("off")
 
     # Title uses project name only, centered.
-    fig.suptitle(title, x=0.5, fontsize=TITLE_FONT, y=0.95)
+    fig.suptitle(title, x=0.5, fontsize=TITLE_FONT, y=TITLE_Y)
     footer_year = year or max_date.year
     footer_version = _tool_version()
     footer = f"© {footer_year} Gantt chart generator v{footer_version} by Nabakator"
