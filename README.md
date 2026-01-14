@@ -1,6 +1,6 @@
 # gantt_chart_generator
 
-A minimalist Python CLI tool that turns a hierarchical project plan into a static SVG Gantt chart with scheduling, validation, and structured error reporting. It is designed to be a “core charting brain” that can be embedded into larger systems (IDEs, web backends, pipelines, etc.).
+A minimalist Python CLI tool that turns a hierarchical project into a static SVG Gantt chart with scheduling, validation, and structured error reporting. It is designed to be a “core charting brain” that can be embedded into larger systems (IDEs, web backends, pipelines, etc.).
 
 ## Features
 
@@ -73,9 +73,9 @@ from gantt_chart_generator.scheduling import schedule_plan
 from gantt_chart_generator.render_rows import to_render_rows
 from gantt_chart_generator.render_gantt import render_gantt
 
-plan = load_plan("project.yml")
-schedule_plan(plan)
-rows = to_render_rows(plan)
+project = load_plan("project.yml")
+schedule_plan(project)
+rows = to_render_rows(project)
 render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind Farm")
 ```
 
@@ -83,10 +83,12 @@ render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind F
 
 ```
 gantt_chart_generator/
+├── input/                 # Example input projects
+├── output/                # Default output folder for rendered charts
 ├── plan_models.py         # Data classes for categories, groups, work packages, milestones, flat rows
 ├── parse_plan.py          # YAML loader with path-aware validation
 ├── scheduling.py          # Validation, cycle detection, scheduling logic
-├── render_rows.py         # Flatten hierarchical plan into render rows
+├── render_rows.py         # Flatten hierarchical project into render rows
 ├── render_gantt.py        # Matplotlib SVG renderer
 ├── gantt_chart_generator/ # CLI package (python -m gantt_chart_generator)
 │   ├── __init__.py
