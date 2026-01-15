@@ -68,13 +68,13 @@ python3 -m gantt_chart_generator input/engineering_project.yml --out output/engi
 ### Programmatic API
 
 ```python
-from gantt_chart_generator.parse_plan import load_plan
-from gantt_chart_generator.scheduling import schedule_plan
+from gantt_chart_generator.parse_project import load_project
+from gantt_chart_generator.scheduling import schedule_project
 from gantt_chart_generator.render_rows import to_render_rows
 from gantt_chart_generator.render_gantt import render_gantt
 
-project = load_plan("project.yml")
-schedule_plan(project)
+project = load_project("project.yml")
+schedule_project(project)
 rows = to_render_rows(project)
 render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind Farm")
 ```
@@ -85,8 +85,8 @@ render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind F
 gantt_chart_generator/
 ├── input/                 # Example input projects
 ├── output/                # Default output folder for rendered charts
-├── plan_models.py         # Data classes for categories, groups, work packages, milestones, flat rows
-├── parse_plan.py          # YAML loader with path-aware validation
+├── project_models.py      # Data classes for categories, groups, work packages, milestones, flat rows
+├── parse_project.py       # YAML loader with path-aware validation
 ├── scheduling.py          # Validation, cycle detection, scheduling logic
 ├── render_rows.py         # Flatten hierarchical project into render rows
 ├── render_gantt.py        # Matplotlib SVG renderer
