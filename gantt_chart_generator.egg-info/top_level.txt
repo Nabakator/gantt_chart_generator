@@ -1,6 +1,6 @@
 gantt_chart_generator
-parse_plan
-plan_models
+parse_project
+project_models
 render_gantt
 render_rows
 scheduling

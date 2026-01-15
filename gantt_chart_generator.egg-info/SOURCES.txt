@@ -1,6 +1,6 @@
 README.md
-parse_plan.py
-plan_models.py
+parse_project.py
+project_models.py
 pyproject.toml
 render_gantt.py
 render_rows.py
