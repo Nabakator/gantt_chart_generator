@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import List
 
+<<<<<<< HEAD:src/gantt_chart_generator/render_rows.py
 from .project_models import FlatRenderRow, Milestone, Project, Task, WBSItem, WorkPackage
+=======
+from project_models import FlatRenderRow, Group, Milestone, Project, ProjectItem, WorkPackage
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):render_rows.py
 
 
 def to_render_rows(project: Project) -> list[FlatRenderRow]:
@@ -16,7 +20,11 @@ def to_render_rows(project: Project) -> list[FlatRenderRow]:
     rows: List[FlatRenderRow] = []
     order = 0
 
+<<<<<<< HEAD:src/gantt_chart_generator/render_rows.py
     for phase in project.phases:
+=======
+    for category in project.categories:
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):render_rows.py
         rows.append(
             FlatRenderRow(
                 order=order,
@@ -35,7 +43,11 @@ def to_render_rows(project: Project) -> list[FlatRenderRow]:
     return rows
 
 
+<<<<<<< HEAD:src/gantt_chart_generator/render_rows.py
 def _append_item(item: WBSItem, rows: List[FlatRenderRow], order: int, indent: int, phase_wbs: str) -> int:
+=======
+def _append_item(item: ProjectItem, rows: List[FlatRenderRow], order: int, indent: int, category_id: str) -> int:
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):render_rows.py
     """Append the given item and its children (if any); return updated order counter."""
 
     if isinstance(item, WorkPackage):
@@ -89,5 +101,9 @@ def _append_item(item: WBSItem, rows: List[FlatRenderRow], order: int, indent: i
             order = _append_item(child, rows, order, indent=indent + 1, phase_wbs=phase_wbs)
         return order
 
+<<<<<<< HEAD:src/gantt_chart_generator/render_rows.py
     # Defensive: unreachable with current WBSItem variants.
+=======
+    # Defensive: unreachable with current ProjectItem variants.
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):render_rows.py
     raise TypeError(f"Unsupported project item type: {type(item)}")

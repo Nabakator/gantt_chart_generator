@@ -17,7 +17,11 @@ from matplotlib.patches import FancyArrowPatch, Polygon
 import matplotlib.path as mpath
 from matplotlib.textpath import TextPath
 
+<<<<<<< HEAD:src/gantt_chart_generator/render_gantt.py
 from .project_models import FlatRenderRow
+=======
+from project_models import FlatRenderRow
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):render_gantt.py
 
 # Routing/grid tuning knobs.
 GRID_DX = 0.35  # days per grid column

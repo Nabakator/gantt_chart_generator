@@ -125,6 +125,7 @@ Notes:
 gantt_chart_generator/
 ├── input/                 # Example input projects
 ├── output/                # Default output folder for rendered charts
+<<<<<<< HEAD
 ├── src/
 │   └── gantt_chart_generator/
 │       ├── __init__.py
@@ -134,6 +135,16 @@ gantt_chart_generator/
 │       ├── render_gantt.py
 │       ├── render_rows.py
 │       └── scheduling.py
+=======
+├── project_models.py      # Data classes for categories, groups, work packages, milestones, flat rows
+├── parse_project.py       # YAML loader with path-aware validation
+├── scheduling.py          # Validation, cycle detection, scheduling logic
+├── render_rows.py         # Flatten hierarchical project into render rows
+├── render_gantt.py        # Matplotlib SVG renderer
+├── gantt_chart_generator/ # CLI package (python -m gantt_chart_generator)
+│   ├── __init__.py
+│   └── __main__.py        # CLI entrypoint
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions)
 └── tests/                 # Pytest suite for scheduling and rendering basics
 ```
 

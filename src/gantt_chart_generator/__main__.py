@@ -7,11 +7,19 @@ from pathlib import Path
 
 import yaml
 
+<<<<<<< HEAD:src/gantt_chart_generator/__main__.py
 from .parse_project import load_project
 from .project_models import Project
 from .render_gantt import render_gantt
 from .render_rows import to_render_rows
 from .scheduling import ProjectValidationError, SchedulingError, schedule_project
+=======
+from parse_project import load_project
+from project_models import Project
+from render_gantt import render_gantt
+from render_rows import to_render_rows
+from scheduling import ProjectValidationError, SchedulingError, schedule_project
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):gantt_chart_generator/__main__.py
 
 
 def _parse_date(value: str):
@@ -77,7 +85,12 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = to_render_rows(project)
 
+<<<<<<< HEAD:src/gantt_chart_generator/__main__.py
     title = project.name
+=======
+    project_name = _extract_project_name(project_path)
+    title = project_name or ""
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions):gantt_chart_generator/__main__.py
 
     try:
         render_gantt(

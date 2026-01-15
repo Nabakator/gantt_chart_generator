@@ -95,8 +95,11 @@ render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind F
 
 ```
 gantt_chart_generator/
+<<<<<<< HEAD
 ├── input/                 # Example input projects
 ├── output/                # Default output folder for rendered charts
+=======
+>>>>>>> 4ee93d4 (Refactor project structure: rename plan to project, update related modules and functions)
 ├── project_models.py      # Data classes for categories, groups, work packages, milestones, flat rows
 ├── parse_project.py       # YAML loader with path-aware validation
 ├── scheduling.py          # Validation, cycle detection, scheduling logic
