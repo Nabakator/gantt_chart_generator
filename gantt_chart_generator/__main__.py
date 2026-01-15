@@ -7,11 +7,11 @@ from pathlib import Path
 
 import yaml
 
-from parse_plan import load_plan
-from plan_models import Plan
+from parse_project import load_project
+from project_models import Project
 from render_gantt import render_gantt
 from render_rows import to_render_rows
-from scheduling import PlanValidationError, SchedulingError, schedule_plan
+from scheduling import ProjectValidationError, SchedulingError, schedule_project
 
 
 def _parse_date(value: str):
@@ -28,7 +28,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Gantt chart generator",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("plan", help="Path to plan YAML")
+    parser.add_argument("project", help="Path to project YAML")
     parser.add_argument("--out", default="output/gantt_chart.svg", help="Output SVG path")
     parser.add_argument("--min-date", type=_parse_date, help="Override inferred minimum date (YYYY-MM-DD)")
     parser.add_argument("--max-date", type=_parse_date, help="Override inferred maximum date (YYYY-MM-DD)")
@@ -67,32 +67,32 @@ def _extract_project_name(path: Path) -> str | None:
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
-    plan_path = Path(args.plan)
+    project_path = Path(args.project)
 
     try:
-        plan: Plan = load_plan(str(plan_path))
-    except (yaml.YAMLError, PlanValidationError) as exc:
+        project: Project = load_project(str(project_path))
+    except (yaml.YAMLError, ProjectValidationError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
     except FileNotFoundError:
-        print(f"Error: plan file not found: {plan_path}", file=sys.stderr)
+        print(f"Error: project file not found: {project_path}", file=sys.stderr)
         return 1
     except Exception as exc:  # Unexpected
-        print(f"Unexpected error while loading plan: {exc}", file=sys.stderr)
+        print(f"Unexpected error while loading project: {exc}", file=sys.stderr)
         return 1
 
     try:
-        schedule_plan(plan)
-    except (PlanValidationError, SchedulingError) as exc:
+        schedule_project(project)
+    except (ProjectValidationError, SchedulingError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
     except Exception as exc:
         print(f"Unexpected error while scheduling: {exc}", file=sys.stderr)
         return 1
 
-    rows = to_render_rows(plan)
+    rows = to_render_rows(project)
 
-    project_name = _extract_project_name(plan_path)
+    project_name = _extract_project_name(project_path)
     title = project_name or ""
 
     try:

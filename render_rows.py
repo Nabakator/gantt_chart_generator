@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import List
 
-from plan_models import FlatRenderRow, Group, Milestone, Plan, PlanItem, WorkPackage
+from project_models import FlatRenderRow, Group, Milestone, Project, ProjectItem, WorkPackage
 
 
-def to_render_rows(plan: Plan) -> list[FlatRenderRow]:
+def to_render_rows(project: Project) -> list[FlatRenderRow]:
     """
-    Convert a scheduled Plan into a flat list of render rows with indentation.
+    Convert a scheduled Project into a flat list of render rows with indentation.
 
     Category headings are emitted first, followed by their items in input order.
     Group rows precede their children; nested items increase indent by 1.
@@ -16,7 +16,7 @@ def to_render_rows(plan: Plan) -> list[FlatRenderRow]:
     rows: List[FlatRenderRow] = []
     order = 0
 
-    for category in plan.categories:
+    for category in project.categories:
         rows.append(
             FlatRenderRow(
                 order=order,
@@ -34,7 +34,7 @@ def to_render_rows(plan: Plan) -> list[FlatRenderRow]:
     return rows
 
 
-def _append_item(item: PlanItem, rows: List[FlatRenderRow], order: int, indent: int, category_id: str) -> int:
+def _append_item(item: ProjectItem, rows: List[FlatRenderRow], order: int, indent: int, category_id: str) -> int:
     """Append the given item and its children (if any); return updated order counter."""
 
     if isinstance(item, WorkPackage):
@@ -85,5 +85,5 @@ def _append_item(item: PlanItem, rows: List[FlatRenderRow], order: int, indent: 
             order = _append_item(child, rows, order, indent=indent + 1, category_id=category_id)
         return order
 
-    # Defensive: unreachable with current PlanItem variants.
-    raise TypeError(f"Unsupported plan item type: {type(item)}")
+    # Defensive: unreachable with current ProjectItem variants.
+    raise TypeError(f"Unsupported project item type: {type(item)}")

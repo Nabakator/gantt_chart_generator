@@ -64,7 +64,7 @@ class Group:
 
     id: str
     name: str
-    items: list["PlanItem"] = field(default_factory=list)
+    items: list["ProjectItem"] = field(default_factory=list)
     category: str | None = None
 
     @property
@@ -80,7 +80,7 @@ class Group:
         return max(candidates) if candidates else None
 
 
-PlanItem = WorkPackage | Milestone | Group
+ProjectItem = WorkPackage | Milestone | Group
 """Convenience alias for nodes that can appear under a category or group."""
 
 
@@ -90,12 +90,12 @@ class Category:
 
     id: str
     name: str
-    items: list[PlanItem] = field(default_factory=list)
+    items: list[ProjectItem] = field(default_factory=list)
     color: str | None = None
 
 
 @dataclass
-class Plan:
+class Project:
     """
     Container for an ordered collection of categories.
 
@@ -109,7 +109,7 @@ class Plan:
 @dataclass
 class FlatRenderRow:
     """
-    Flattened view of a plan used by renderers.
+    Flattened view of a project used by renderers.
 
     Only the fields relevant to drawing are kept: positional order,
     indentation level, node kind, category, and relevant date boundaries.
