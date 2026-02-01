@@ -1,3 +1,4 @@
+LICENSE
 README.md
 parse_project.py
 project_models.py
