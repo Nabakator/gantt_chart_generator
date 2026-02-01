@@ -29,6 +29,9 @@ DETOUR_STEP_X = 0.5  # days to shift detour leftwards when blocked
 DETOUR_MAX_STEPS = 8  # max shifts to try
 DETOUR_MARGIN_X = 1.0  # minimum margin from global x_min when shifting
 BRACKET_LW = 2.5
+MILESTONE_BAND_DAYS = 0.35
+MILESTONE_BAND_ALPHA = 0.12
+MILESTONE_BAND_COLOR = "#666666"
 # Fixed large gutter so labels sit clear of the timeline.
 LEFT_MARGIN_FRAC = 0.42
 LABEL_PAD_INCH = 0.35  # extra padding beyond longest label when computing gutter
@@ -54,8 +57,8 @@ def render_gantt(
     Render a static SVG Gantt chart to `out_path`.
 
     - Expects scheduled rows (dates already computed).
-    - Category headings are included as rows; indentation drives label offset.
-    - Deterministic category colours based on sorted category ids.
+    - Phase headings are included as rows; indentation drives label offset.
+    - Deterministic phase colours based on sorted phase WBS codes.
     """
 
     if not rows:
@@ -63,7 +66,7 @@ def render_gantt(
 
     min_date, max_date = _resolve_date_window(rows, min_date, max_date)
 
-    cat_colors = _category_colors(rows)
+    phase_colors = _phase_colors(rows)
     label_pad_days = LABEL_PAD_DAYS
     indent_step_days = 0.5
     row_height = 0.6
@@ -110,17 +113,30 @@ def render_gantt(
     footer = f"© {footer_year} Gantt chart generator v{footer_version} by Nabakator"
     fig.text(0.99, 0.01, footer, ha="right", va="bottom", fontsize=FOOTER_FONT, alpha=0.8)
 
+    # Draw milestone alignment bands first so everything else sits above.
+    milestone_dates = {row.deadline_date for row in rows if row.node_type == "lozenge" and row.deadline_date}
+    for milestone_date in sorted(milestone_dates):
+        center = mdates.date2num(milestone_date)
+        ax.axvspan(
+            center - MILESTONE_BAND_DAYS / 2,
+            center + MILESTONE_BAND_DAYS / 2,
+            color=MILESTONE_BAND_COLOR,
+            alpha=MILESTONE_BAND_ALPHA,
+            zorder=0.5,
+        )
+
     # Collect positions for dependency arrows.
     positions: dict[str, tuple[float, float, float]] = {}  # id -> (x_start, x_finish, y)
     bar_rects: dict[str, tuple[float, float, float, float]] = {}
 
     for idx, row in enumerate(rows):
         y = idx
-        text_weight = "bold" if row.node_type == "category" else "normal"
+        text_weight = "bold" if row.node_type == "phase" else "normal"
+        label = f"{row.wbs} {row.name}".strip()
         label_ax.text(
             0.98,
             y,
-            row.name,
+            label,
             ha="right",
             va="center",
             fontsize=LABEL_FONT,
@@ -132,7 +148,7 @@ def render_gantt(
             start_num = mdates.date2num(row.start_date)
             end_num = mdates.date2num(row.finish_date + dt.timedelta(days=1))
             width = end_num - start_num
-            color = cat_colors.get(row.category, "#999999")
+            color = phase_colors.get(row.phase, "#999999")
             ax.barh(
                 y,
                 width=width,
@@ -161,12 +177,12 @@ def render_gantt(
             x_start = mdates.date2num(row.start_date)
             x_end = mdates.date2num(row.finish_date + dt.timedelta(days=1))
             cap = row_height / 2.2
-            color = cat_colors.get(row.category, "#555555")
+            color = phase_colors.get(row.phase, "#555555")
             ax.plot([x_start, x_end], [y, y], color=color, linewidth=BRACKET_LW, zorder=2)
             ax.plot([x_start, x_start], [y - cap, y + cap], color=color, linewidth=BRACKET_LW, zorder=2)
             ax.plot([x_end, x_end], [y - cap, y + cap], color=color, linewidth=BRACKET_LW, zorder=2)
 
-        # Categories only emit label.
+        # Phases only emit label.
 
     _draw_dependencies(ax, rows, positions, bar_rects)
 
@@ -175,10 +191,10 @@ def render_gantt(
     plt.close(fig)
 
 
-def _category_colors(rows: Iterable[FlatRenderRow]) -> dict[str, str]:
-    category_ids = sorted({row.category for row in rows if row.category})
+def _phase_colors(rows: Iterable[FlatRenderRow]) -> dict[str, str]:
+    phase_ids = sorted({row.phase for row in rows if row.phase})
     palette = plt.get_cmap("tab20")
-    return {cid: matplotlib.colors.to_hex(palette(i % palette.N)) for i, cid in enumerate(category_ids)}
+    return {pid: matplotlib.colors.to_hex(palette(i % palette.N)) for i, pid in enumerate(phase_ids)}
 
 
 def _resolve_date_window(

@@ -1,45 +1,47 @@
 project:
   name: Engineering project
 
-categories:
-  - id: planning
+phases:
+  - wbs: "0"
     name: Planning
     items:
-      - type: workpackage
-        id: WP_SCOPE
-        name: Define scope
-        start_date: "2025-01-06"
-        duration_days: 5
-        depends_on: []
-      - type: workpackage
-        id: WP_SCHEDULE
-        name: Draft schedule
-        duration_days: 4
-        depends_on: [WP_SCOPE]
+      - wbs: "0.1"
+        name: Scope and schedule
+        items:
+          - wbs: "0.1.1"
+            name: Define scope
+            start_date: "2025-01-06"
+            duration_days: 5
+          - wbs: "0.1.2"
+            name: Draft schedule
+            duration_days: 4
+            depends_on: ["0.1.1"]
 
-  - id: design
+  - wbs: "1"
     name: Design
     items:
-      - type: workpackage
-        id: WP_ARCH
-        name: Architecture design
-        duration_days: 10
-        depends_on: [WP_SCHEDULE]
-      - type: workpackage
-        id: WP_REVIEW
-        name: Design review
-        duration_days: 2
-        depends_on: [WP_ARCH]
+      - wbs: "1.1"
+        name: Architecture
+        items:
+          - wbs: "1.1.1"
+            name: Architecture design
+            duration_days: 10
+            depends_on: ["0.1.2"]
+          - wbs: "1.1.2"
+            name: Design review
+            duration_days: 2
+            depends_on: ["1.1.1"]
 
-  - id: build
+  - wbs: "2"
     name: Build
     items:
-      - type: workpackage
-        id: WP_IMPLEMENT
+      - wbs: "2.1"
         name: Implementation
-        duration_days: 12
-        depends_on: [WP_REVIEW]
-      - type: milestone
-        id: MS_RELEASE
-        name: Release ready
-        deadline_date: "2025-02-14"
+        items:
+          - wbs: "2.1.1"
+            name: Implementation
+            duration_days: 12
+            depends_on: ["1.1.2"]
+          - wbs: "2.1.2"
+            name: Release ready
+            deadline_date: "2025-02-14"
