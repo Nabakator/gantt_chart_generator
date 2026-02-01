@@ -2,10 +2,10 @@ import datetime as dt
 
 import pytest
 
-from project_models import Category, Group, Milestone, Project, WorkPackage
-from render_gantt import render_gantt
-from render_rows import to_render_rows
-from scheduling import ProjectValidationError, SchedulingError, schedule_project
+from gantt_chart_generator.project_models import Category, Group, Milestone, Project, WorkPackage
+from gantt_chart_generator.render_gantt import render_gantt
+from gantt_chart_generator.render_rows import to_render_rows
+from gantt_chart_generator.scheduling import ProjectValidationError, SchedulingError, schedule_project
 
 
 def _project_with_items(items):

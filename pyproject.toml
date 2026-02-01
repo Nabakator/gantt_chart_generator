@@ -18,8 +18,8 @@ gantt-chart-generator = "gantt_chart_generator.__main__:main"
 
 [tool.setuptools]
 include-package-data = false
-py-modules = ["project_models", "parse_project", "render_gantt", "render_rows", "scheduling"]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["gantt_chart_generator"]

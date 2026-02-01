@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Iterable
 
-from project_models import Category, Group, Project, ProjectItem, WorkPackage
+from .project_models import Category, Group, Project, ProjectItem, WorkPackage
 
 
 class ProjectValidationError(Exception):
