@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Iterable
 
-from .project_models import Category, Group, Project, ProjectItem, WorkPackage
+from .project_models import Phase, Project, Task, WBSItem, WorkPackage
 
 
 class ProjectValidationError(Exception):
@@ -30,58 +30,75 @@ def schedule_project(project: Project) -> Project:
     """
     Validate and schedule a project in-place and return it.
 
-    - Detects duplicate IDs, unknown references, and dependency cycles.
+    - Detects duplicate WBS codes, unknown references, and dependency cycles.
     - Infers missing work package start dates from predecessor finishes.
     - Raises when explicit start dates violate predecessor finishes.
-    - Computes group spans after scheduling (available via Group.span_start/span_finish).
+    - Computes task/phase spans after scheduling (available via span_start/span_finish).
     """
 
-    id_lookup = _validate_unique_ids(project)
-    _validate_dependencies_exist(project, id_lookup)
+    wbs_lookup = _validate_unique_wbs(project)
+    _validate_wbs_hierarchy(project)
+    _validate_dependencies_exist(project, wbs_lookup)
 
     work_packages = list(_walk_work_packages(project))
     _assert_no_cycles(work_packages)
 
     topo_order = _toposort(work_packages)
-    _schedule_work_packages(topo_order, {wp.id: wp for wp in work_packages})
+    _schedule_work_packages(topo_order, {wp.wbs: wp for wp in work_packages})
 
-    # Touch group spans so users can fetch them without re-traversing.
+    # Touch spans so callers can query them without re-traversing.
     compute_group_spans(project)
     return project
 
 
-def _validate_unique_ids(project: Project) -> dict[str, Project | Category | ProjectItem]:
-    id_lookup: dict[str, Project | Category | ProjectItem] = {}
+def _validate_unique_wbs(project: Project) -> dict[str, Project | Phase | WBSItem]:
+    wbs_lookup: dict[str, Project | Phase | WBSItem] = {}
 
-    def register(node_id: str, node: Project | Category | ProjectItem) -> None:
-        if node_id in id_lookup:
-            existing = type(id_lookup[node_id]).__name__
+    def register(node_wbs: str, node: Project | Phase | WBSItem) -> None:
+        if node_wbs in wbs_lookup:
+            existing = type(wbs_lookup[node_wbs]).__name__
             raise ProjectValidationError(
-                f"Duplicate id '{node_id}' found (first seen as {existing}, again as {type(node).__name__})"
+                f"Duplicate wbs '{node_wbs}' found (first seen as {existing}, again as {type(node).__name__})"
             )
-        id_lookup[node_id] = node
+        wbs_lookup[node_wbs] = node
 
-    for category in project.categories:
-        register(category.id, category)
-        for item in _walk_items(category.items):
-            register(item.id, item)
+    for phase in project.phases:
+        register(phase.wbs, phase)
+        for item in _walk_items(phase.items):
+            register(item.wbs, item)
 
-    return id_lookup
+    return wbs_lookup
 
 
-def _validate_dependencies_exist(project: Project, id_lookup: dict[str, Project | Category | ProjectItem]) -> None:
+def _validate_wbs_hierarchy(project: Project) -> None:
+    def assert_child(parent: str, child: str) -> None:
+        prefix = f"{parent}."
+        if not child.startswith(prefix):
+            raise ProjectValidationError(f"WBS '{child}' must start with '{prefix}'")
+
+    def visit(items: list[WBSItem], parent_wbs: str) -> None:
+        for item in items:
+            assert_child(parent_wbs, item.wbs)
+            if isinstance(item, Task):
+                visit(item.items, item.wbs)
+
+    for phase in project.phases:
+        visit(phase.items, phase.wbs)
+
+
+def _validate_dependencies_exist(project: Project, wbs_lookup: dict[str, Project | Phase | WBSItem]) -> None:
     for wp in _walk_work_packages(project):
-        for dep_id in wp.depends_on:
-            dep = id_lookup.get(dep_id)
+        for dep_wbs in wp.depends_on:
+            dep = wbs_lookup.get(dep_wbs)
             if dep is None:
-                raise ProjectValidationError(f"WorkPackage '{wp.id}' depends on unknown id '{dep_id}'")
+                raise ProjectValidationError(f"WorkPackage '{wp.wbs}' depends on unknown wbs '{dep_wbs}'")
             if not isinstance(dep, WorkPackage):
-                raise ProjectValidationError(f"WorkPackage '{wp.id}' depends on non-workpackage '{dep_id}'")
+                raise ProjectValidationError(f"WorkPackage '{wp.wbs}' depends on non-workpackage '{dep_wbs}'")
 
 
 def _assert_no_cycles(work_packages: Iterable[WorkPackage]) -> None:
-    order = [wp.id for wp in work_packages]
-    dependencies: dict[str, list[str]] = {wp.id: list(wp.depends_on) for wp in work_packages}
+    order = [wp.wbs for wp in work_packages]
+    dependencies: dict[str, list[str]] = {wp.wbs: list(wp.depends_on) for wp in work_packages}
     cycle = _find_cycle(order, dependencies)
     if cycle:
         raise ProjectValidationError(f"Dependency cycle detected: {cycle}")
@@ -92,29 +109,29 @@ def _find_cycle(order: list[str], dependencies: dict[str, list[str]]) -> Cycle |
     stack: list[str] = []
     positions: dict[str, int] = {}
 
-    def dfs(node_id: str) -> Cycle | None:
-        state[node_id] = "visiting"
-        positions[node_id] = len(stack)
-        stack.append(node_id)
+    def dfs(node_wbs: str) -> Cycle | None:
+        state[node_wbs] = "visiting"
+        positions[node_wbs] = len(stack)
+        stack.append(node_wbs)
 
-        for dep_id in dependencies.get(node_id, []):
-            dep_state = state.get(dep_id)
+        for dep_wbs in dependencies.get(node_wbs, []):
+            dep_state = state.get(dep_wbs)
             if dep_state == "visiting":
-                cycle_path = stack[positions[dep_id] :] + [dep_id]
+                cycle_path = stack[positions[dep_wbs] :] + [dep_wbs]
                 return Cycle(cycle_path)
             if dep_state is None:
-                found = dfs(dep_id)
+                found = dfs(dep_wbs)
                 if found:
                     return found
 
         stack.pop()
-        positions.pop(node_id, None)
-        state[node_id] = "done"
+        positions.pop(node_wbs, None)
+        state[node_wbs] = "done"
         return None
 
-    for node_id in order:
-        if state.get(node_id) is None:
-            found = dfs(node_id)
+    for node_wbs in order:
+        if state.get(node_wbs) is None:
+            found = dfs(node_wbs)
             if found:
                 return found
     return None
@@ -123,50 +140,50 @@ def _find_cycle(order: list[str], dependencies: dict[str, list[str]]) -> Cycle |
 def _toposort(work_packages: Iterable[WorkPackage]) -> list[WorkPackage]:
     # Preserve input order by using the incoming iteration order for seeds and adjacency.
     wp_list = list(work_packages)
-    dependents: dict[str, list[str]] = {wp.id: [] for wp in wp_list}
-    indegree: dict[str, int] = {wp.id: 0 for wp in wp_list}
+    dependents: dict[str, list[str]] = {wp.wbs: [] for wp in wp_list}
+    indegree: dict[str, int] = {wp.wbs: 0 for wp in wp_list}
 
     for wp in wp_list:
-        for dep_id in wp.depends_on:
-            dependents.setdefault(dep_id, []).append(wp.id)
-            indegree[wp.id] += 1
+        for dep_wbs in wp.depends_on:
+            dependents.setdefault(dep_wbs, []).append(wp.wbs)
+            indegree[wp.wbs] += 1
 
-    queue = deque([wp.id for wp in wp_list if indegree[wp.id] == 0])
-    result_ids: list[str] = []
+    queue = deque([wp.wbs for wp in wp_list if indegree[wp.wbs] == 0])
+    result_wbs: list[str] = []
 
     while queue:
         current = queue.popleft()
-        result_ids.append(current)
+        result_wbs.append(current)
         for child in dependents.get(current, []):
             indegree[child] -= 1
             if indegree[child] == 0:
                 queue.append(child)
 
-    if len(result_ids) != len(wp_list):
+    if len(result_wbs) != len(wp_list):
         # Should not happen because cycles are validated earlier.
         raise ProjectValidationError("Cycle detected during toposort")
 
-    id_to_wp = {wp.id: wp for wp in wp_list}
-    return [id_to_wp[rid] for rid in result_ids]
+    wbs_to_wp = {wp.wbs: wp for wp in wp_list}
+    return [wbs_to_wp[wbs] for wbs in result_wbs]
 
 
 def _schedule_work_packages(order: list[WorkPackage], lookup: dict[str, WorkPackage]) -> None:
     for wp in order:
         if wp.duration_days <= 0:
-            raise ProjectValidationError(f"WorkPackage '{wp.id}' has non-positive duration_days={wp.duration_days}")
+            raise ProjectValidationError(f"WorkPackage '{wp.wbs}' has non-positive duration_days={wp.duration_days}")
 
         if not wp.depends_on:
             continue
 
         dep_finishes = []
-        for dep_id in wp.depends_on:
-            predecessor = lookup[dep_id]
+        for dep_wbs in wp.depends_on:
+            predecessor = lookup[dep_wbs]
             finish = predecessor.finish_date
             if finish is None:
                 raise SchedulingError(
-                    f"Cannot schedule '{wp.id}' because predecessor '{dep_id}' has no start_date"
+                    f"Cannot schedule '{wp.wbs}' because predecessor '{dep_wbs}' has no start_date"
                 )
-            dep_finishes.append((dep_id, finish))
+            dep_finishes.append((dep_wbs, finish))
 
         latest_dep, latest_finish = max(dep_finishes, key=lambda pair: pair[1])
 
@@ -174,13 +191,13 @@ def _schedule_work_packages(order: list[WorkPackage], lookup: dict[str, WorkPack
             wp.start_date = latest_finish
         elif wp.start_date < latest_finish:
             raise SchedulingError(
-                f"WorkPackage '{wp.id}' start {wp.start_date} precedes dependency '{latest_dep}' finish {latest_finish}"
+                f"WorkPackage '{wp.wbs}' start {wp.start_date} precedes dependency '{latest_dep}' finish {latest_finish}"
             )
 
 
 def compute_group_spans(project: Project) -> dict[str, tuple[date | None, date | None]]:
     """
-    Compute and return spans for every group as (start, finish).
+    Compute and return spans for every phase and task as (start, finish).
 
     Spans are derived from children after scheduling; dates may be None if
     unresolved. The project itself is unchanged.
@@ -188,29 +205,30 @@ def compute_group_spans(project: Project) -> dict[str, tuple[date | None, date |
 
     spans: dict[str, tuple[date | None, date | None]] = {}
 
-    def visit(items: list[ProjectItem]) -> None:
+    def visit(items: list[WBSItem]) -> None:
         for item in items:
-            if isinstance(item, Group):
+            if isinstance(item, Task):
                 visit(item.items)
-                spans[item.id] = (item.span_start, item.span_finish)
+                spans[item.wbs] = (item.span_start, item.span_finish)
 
-    for category in project.categories:
-        visit(category.items)
+    for phase in project.phases:
+        visit(phase.items)
+        spans[phase.wbs] = (phase.span_start, phase.span_finish)
     return spans
 
 
-def _walk_items(items: list[ProjectItem]) -> Iterable[ProjectItem]:
+def _walk_items(items: list[WBSItem]) -> Iterable[WBSItem]:
     for item in items:
         yield item
-        if isinstance(item, Group):
+        if isinstance(item, Task):
             yield from _walk_items(item.items)
 
 
-def _walk_work_packages(project: Project | list[ProjectItem]) -> Iterable[WorkPackage]:
+def _walk_work_packages(project: Project | list[WBSItem]) -> Iterable[WorkPackage]:
     if isinstance(project, Project):
-        iterable = []
-        for category in project.categories:
-            iterable.extend(category.items)
+        iterable: list[WBSItem] = []
+        for phase in project.phases:
+            iterable.extend(phase.items)
     else:
         iterable = project
 

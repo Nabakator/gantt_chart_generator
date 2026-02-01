@@ -1,14 +1,15 @@
 # gantt_chart_generator
 
-A minimalist Python CLI tool that turns a hierarchical project into a static SVG Gantt chart with scheduling, validation, and structured error reporting. It is designed to be a “core charting brain” that can be embedded into larger systems (IDEs, web backends, pipelines, etc.).
+A minimalist Python CLI tool that turns a WBS-first project into a static SVG Gantt chart with scheduling, validation, and structured error reporting. It is designed to be a “core charting brain” that can be embedded into larger systems (IDEs, web backends, pipelines, etc.).
 
 ## Features
 
-- **Hierarchical model**: Categories, groups, work packages, and milestones with nesting.
+- **WBS-first model**: Phases → tasks → lowest-level work packages and milestones.
 - **Scheduling**: Validates dependencies, detects cycles, infers missing start dates, and checks precedence violations.
 - **Strict YAML parsing**: Path-aware validation errors for bad fields, types, or duplicates.
-- **Deterministic rendering**: Stable ordering and category-to-colour mapping; outputs SVG via matplotlib.
+- **Deterministic rendering**: Stable ordering and phase-to-colour mapping; outputs SVG via matplotlib.
 - **Dependency arrows**: Finish-to-start relationships drawn between work packages.
+- **Milestone alignment bands**: Milestones render a diamond plus a thin vertical alignment band.
 - **Clean API**: Load → schedule → flatten → render pipeline usable programmatically or via CLI.
 
 ## Requirements
@@ -79,6 +80,44 @@ schedule_project(project)
 rows = to_render_rows(project)
 render_gantt(rows, out_path="chart.svg", title="Gantt chart generator — Wind Farm")
 ```
+
+### Input format (WBS-first)
+
+```yaml
+project:
+  name: Mango Island Rover Project
+
+phases:
+  - wbs: "0"
+    name: Planning
+    items:
+      - wbs: "0.1"
+        name: Project management
+        items:
+          - wbs: "0.1.1"
+            name: Work breakdown structure
+            start_date: "2025-01-06"
+            duration_days: 3
+          - wbs: "0.1.2"
+            name: Network diagram
+            duration_days: 2
+            depends_on: ["0.1.1"]
+  - wbs: "1"
+    name: Design
+    items:
+      - wbs: "1.1"
+        name: Aerodynamic analysis
+        items:
+          - wbs: "1.1.1"
+            name: CFD study
+            duration_days: 5
+            depends_on: ["0.1.2"]
+```
+
+Notes:
+- Every node must include a `wbs` code.
+- Child WBS codes must begin with the parent code plus a dot (e.g. `1.2` → `1.2.1`).
+- `depends_on` references other work packages by WBS code.
 
 ## Project structure
 
