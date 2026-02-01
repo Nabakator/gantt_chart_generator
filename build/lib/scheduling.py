@@ -5,11 +5,11 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Iterable
 
-from plan_models import Category, Group, Plan, PlanItem, WorkPackage
+from project_models import Category, Group, Project, ProjectItem, WorkPackage
 
 
-class PlanValidationError(Exception):
-    """Raised when the plan structure is invalid (duplicates, bad refs, cycles)."""
+class ProjectValidationError(Exception):
+    """Raised when the project structure is invalid (duplicates, bad refs, cycles)."""
 
 
 class SchedulingError(Exception):
@@ -26,9 +26,9 @@ class Cycle:
         return " -> ".join(self.path)
 
 
-def schedule_plan(plan: Plan) -> Plan:
+def schedule_project(project: Project) -> Project:
     """
-    Validate and schedule a plan in-place and return it.
+    Validate and schedule a project in-place and return it.
 
     - Detects duplicate IDs, unknown references, and dependency cycles.
     - Infers missing work package start dates from predecessor finishes.
@@ -36,32 +36,32 @@ def schedule_plan(plan: Plan) -> Plan:
     - Computes group spans after scheduling (available via Group.span_start/span_finish).
     """
 
-    id_lookup = _validate_unique_ids(plan)
-    _validate_dependencies_exist(plan, id_lookup)
+    id_lookup = _validate_unique_ids(project)
+    _validate_dependencies_exist(project, id_lookup)
 
-    work_packages = list(_walk_work_packages(plan))
+    work_packages = list(_walk_work_packages(project))
     _assert_no_cycles(work_packages)
 
     topo_order = _toposort(work_packages)
     _schedule_work_packages(topo_order, {wp.id: wp for wp in work_packages})
 
     # Touch group spans so users can fetch them without re-traversing.
-    compute_group_spans(plan)
-    return plan
+    compute_group_spans(project)
+    return project
 
 
-def _validate_unique_ids(plan: Plan) -> dict[str, Plan | Category | PlanItem]:
-    id_lookup: dict[str, Plan | Category | PlanItem] = {}
+def _validate_unique_ids(project: Project) -> dict[str, Project | Category | ProjectItem]:
+    id_lookup: dict[str, Project | Category | ProjectItem] = {}
 
-    def register(node_id: str, node: Plan | Category | PlanItem) -> None:
+    def register(node_id: str, node: Project | Category | ProjectItem) -> None:
         if node_id in id_lookup:
             existing = type(id_lookup[node_id]).__name__
-            raise PlanValidationError(
+            raise ProjectValidationError(
                 f"Duplicate id '{node_id}' found (first seen as {existing}, again as {type(node).__name__})"
             )
         id_lookup[node_id] = node
 
-    for category in plan.categories:
+    for category in project.categories:
         register(category.id, category)
         for item in _walk_items(category.items):
             register(item.id, item)
@@ -69,14 +69,14 @@ def _validate_unique_ids(plan: Plan) -> dict[str, Plan | Category | PlanItem]:
     return id_lookup
 
 
-def _validate_dependencies_exist(plan: Plan, id_lookup: dict[str, Plan | Category | PlanItem]) -> None:
-    for wp in _walk_work_packages(plan):
+def _validate_dependencies_exist(project: Project, id_lookup: dict[str, Project | Category | ProjectItem]) -> None:
+    for wp in _walk_work_packages(project):
         for dep_id in wp.depends_on:
             dep = id_lookup.get(dep_id)
             if dep is None:
-                raise PlanValidationError(f"WorkPackage '{wp.id}' depends on unknown id '{dep_id}'")
+                raise ProjectValidationError(f"WorkPackage '{wp.id}' depends on unknown id '{dep_id}'")
             if not isinstance(dep, WorkPackage):
-                raise PlanValidationError(f"WorkPackage '{wp.id}' depends on non-workpackage '{dep_id}'")
+                raise ProjectValidationError(f"WorkPackage '{wp.id}' depends on non-workpackage '{dep_id}'")
 
 
 def _assert_no_cycles(work_packages: Iterable[WorkPackage]) -> None:
@@ -84,7 +84,7 @@ def _assert_no_cycles(work_packages: Iterable[WorkPackage]) -> None:
     dependencies: dict[str, list[str]] = {wp.id: list(wp.depends_on) for wp in work_packages}
     cycle = _find_cycle(order, dependencies)
     if cycle:
-        raise PlanValidationError(f"Dependency cycle detected: {cycle}")
+        raise ProjectValidationError(f"Dependency cycle detected: {cycle}")
 
 
 def _find_cycle(order: list[str], dependencies: dict[str, list[str]]) -> Cycle | None:
@@ -144,7 +144,7 @@ def _toposort(work_packages: Iterable[WorkPackage]) -> list[WorkPackage]:
 
     if len(result_ids) != len(wp_list):
         # Should not happen because cycles are validated earlier.
-        raise PlanValidationError("Cycle detected during toposort")
+        raise ProjectValidationError("Cycle detected during toposort")
 
     id_to_wp = {wp.id: wp for wp in wp_list}
     return [id_to_wp[rid] for rid in result_ids]
@@ -153,7 +153,7 @@ def _toposort(work_packages: Iterable[WorkPackage]) -> list[WorkPackage]:
 def _schedule_work_packages(order: list[WorkPackage], lookup: dict[str, WorkPackage]) -> None:
     for wp in order:
         if wp.duration_days <= 0:
-            raise PlanValidationError(f"WorkPackage '{wp.id}' has non-positive duration_days={wp.duration_days}")
+            raise ProjectValidationError(f"WorkPackage '{wp.id}' has non-positive duration_days={wp.duration_days}")
 
         if not wp.depends_on:
             continue
@@ -178,41 +178,41 @@ def _schedule_work_packages(order: list[WorkPackage], lookup: dict[str, WorkPack
             )
 
 
-def compute_group_spans(plan: Plan) -> dict[str, tuple[date | None, date | None]]:
+def compute_group_spans(project: Project) -> dict[str, tuple[date | None, date | None]]:
     """
     Compute and return spans for every group as (start, finish).
 
     Spans are derived from children after scheduling; dates may be None if
-    unresolved. The plan itself is unchanged.
+    unresolved. The project itself is unchanged.
     """
 
     spans: dict[str, tuple[date | None, date | None]] = {}
 
-    def visit(items: list[PlanItem]) -> None:
+    def visit(items: list[ProjectItem]) -> None:
         for item in items:
             if isinstance(item, Group):
                 visit(item.items)
                 spans[item.id] = (item.span_start, item.span_finish)
 
-    for category in plan.categories:
+    for category in project.categories:
         visit(category.items)
     return spans
 
 
-def _walk_items(items: list[PlanItem]) -> Iterable[PlanItem]:
+def _walk_items(items: list[ProjectItem]) -> Iterable[ProjectItem]:
     for item in items:
         yield item
         if isinstance(item, Group):
             yield from _walk_items(item.items)
 
 
-def _walk_work_packages(plan: Plan | list[PlanItem]) -> Iterable[WorkPackage]:
-    if isinstance(plan, Plan):
+def _walk_work_packages(project: Project | list[ProjectItem]) -> Iterable[WorkPackage]:
+    if isinstance(project, Project):
         iterable = []
-        for category in plan.categories:
+        for category in project.categories:
             iterable.extend(category.items)
     else:
-        iterable = plan
+        iterable = project
 
     for item in _walk_items(list(iterable)):
         if isinstance(item, WorkPackage):
