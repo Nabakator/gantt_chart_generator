@@ -6,8 +6,8 @@ from typing import Any
 
 import yaml
 
-from project_models import Category, Group, Milestone, Project, ProjectItem, WorkPackage
-from scheduling import ProjectValidationError
+from .project_models import Category, Group, Milestone, Project, ProjectItem, WorkPackage
+from .scheduling import ProjectValidationError
 
 
 @dataclass(frozen=True)

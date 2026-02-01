@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from project_models import FlatRenderRow, Group, Milestone, Project, ProjectItem, WorkPackage
+from .project_models import FlatRenderRow, Group, Milestone, Project, ProjectItem, WorkPackage
 
 
 def to_render_rows(project: Project) -> list[FlatRenderRow]:

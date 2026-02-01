@@ -17,7 +17,7 @@ from matplotlib.patches import FancyArrowPatch, Polygon
 import matplotlib.path as mpath
 from matplotlib.textpath import TextPath
 
-from project_models import FlatRenderRow
+from .project_models import FlatRenderRow
 
 # Routing/grid tuning knobs.
 GRID_DX = 0.35  # days per grid column
