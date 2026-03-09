@@ -7,11 +7,11 @@ from pathlib import Path
 
 import yaml
 
-from parse_project import load_project
-from project_models import Project
-from render_gantt import render_gantt
-from render_rows import to_render_rows
-from scheduling import ProjectValidationError, SchedulingError, schedule_project
+from .parse_project import load_project
+from .project_models import Project
+from .render_gantt import render_gantt
+from .render_rows import to_render_rows
+from .scheduling import ProjectValidationError, SchedulingError, schedule_project
 
 
 def _parse_date(value: str):
@@ -49,21 +49,6 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _extract_project_name(path: Path) -> str | None:
-    try:
-        with path.open("r", encoding="utf-8") as fh:
-            raw = yaml.safe_load(fh)
-    except Exception:
-        return None
-    if isinstance(raw, dict):
-        project = raw.get("project")
-        if isinstance(project, dict):
-            name = project.get("name")
-            if isinstance(name, str):
-                return name
-    return None
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -92,8 +77,7 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = to_render_rows(project)
 
-    project_name = _extract_project_name(project_path)
-    title = project_name or ""
+    title = project.name
 
     try:
         render_gantt(
