@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gantt_chart_generator"
-version = "0.1.0"
+version = "1.1.0"
 description = "Minimal CLI to load, schedule, flatten, and render a static SVG Gantt chart."
 readme = "README.md"
 requires-python = ">=3.10"
